@@ -1,0 +1,6 @@
+sieve-monitor
+notes
+cruft
+*.core
+*.log
+*postactivate
