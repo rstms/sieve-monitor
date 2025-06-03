@@ -19,8 +19,9 @@ const DEFAULT_SCAN_SECONDS = 5
 const DEFAULT_STABILIZE_SECONDS = 1
 const DEFAULT_STABILIZE_COUNT = 5
 
-var SENDER_PATTERN = regexp.MustCompile(`^\s*Sender: <([^>]*)>`)
-var MESSAGE_DELIVERY_PATTERN = regexp.MustCompile(`^Sieve trace log for message delivery:.*$`)
+var TRACE_PATTERN_MESSAGE = regexp.MustCompile(`^\s*Sieve trace log for message delivery:`)
+var TRACE_PATTERN_DAEMON = regexp.MustCompile(`^\s*Sender:.*<[A-Z]+-DAEMON@.*>`)
+var TRACE_PATTERN_EXECUTE = regexp.MustCompile(`^\s*## Started executing`)
 
 type TraceFile struct {
 	Username string
@@ -153,39 +154,39 @@ func (m *Monitor) scanFiles() {
 	}
 }
 
-func (f *TraceFile) scan(m *Monitor) bool {
-	stat, err := os.Stat(f.Filename)
+func (t *TraceFile) scan(m *Monitor) bool {
+	stat, err := os.Stat(t.Filename)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if f.Size == stat.Size() {
+	if t.Size == stat.Size() {
 		// if the file size has not changed, bump the counter
-		f.Count += 1
+		t.Count += 1
 		if m.Verbose {
-			log.Printf("bump: %+v\n", *f)
+			log.Printf("bump: %+v\n", *t)
 		}
 	} else {
 		// the file size has changed, remember the new size and reset the counter
-		f.Size = stat.Size()
-		f.Count = 0
+		t.Size = stat.Size()
+		t.Count = 0
 		if m.Verbose {
-			log.Printf("changed: %+v\n", *f)
+			log.Printf("changed: %+v\n", *t)
 		}
 	}
-	if f.Count >= m.StabilizeCount {
+	if t.Count >= m.StabilizeCount {
 		if m.Verbose {
-			log.Printf("stabilized: %+v\n", *f)
+			log.Printf("stabilized: %+v\n", *t)
 		}
-		if !m.skipSender(f.Filename) {
-			err := SendFile(f.Username, m.Domain, f.Filename)
+		if t.shouldForward(m) {
+			err := SendFile(t.Username, m.Domain, t.Filename)
 			if err != nil {
 				log.Fatal(err)
 			}
 		}
 		if m.Verbose {
-			log.Printf("removing: %s\n", f.Filename)
+			log.Printf("removing: %s\n", t.Filename)
 		}
-		err = os.Remove(f.Filename)
+		err = os.Remove(t.Filename)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -194,39 +195,47 @@ func (f *TraceFile) scan(m *Monitor) bool {
 	return false
 }
 
-func (m *Monitor) skipSender(filename string) bool {
-	file, err := os.Open(filename)
+func (t *TraceFile) shouldForward(m *Monitor) bool {
+
+	file, err := os.Open(t.Filename)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
-	var sender string
-	var isMessageDelivery bool
+	defer func() {
+		err = scanner.Err()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	// default to skip
+	forward := false
+	reason := "non_message_delivery_trace"
+
 	for scanner.Scan() {
 		line := scanner.Text()
-		if MESSAGE_DELIVERY_PATTERN.MatchString(line) {
-			isMessageDelivery = true
+		if TRACE_PATTERN_MESSAGE.MatchString(line) {
+			reason = "message_delivery_trace"
+			forward = true
 		}
-		match := SENDER_PATTERN.FindStringSubmatch(line)
-		log.Printf("match: %d %v\n", len(match), match)
-		if len(match) > 1 {
-			sender = match[1]
+		if TRACE_PATTERN_DAEMON.MatchString(line) {
+			reason = "sender_is_daemon"
+			forward = false
+		}
+		if TRACE_PATTERN_EXECUTE.MatchString(line) {
 			break
 		}
 	}
-	log.Printf("sender=%s\n", sender)
-	err = scanner.Err()
-	if err != nil {
-		log.Fatal(err)
+	if m.Verbose {
+		action := "Forwarding"
+		if !forward {
+			action = "Skipping"
+		}
+		log.Printf("%s %s %s\n", action, reason, t.Filename)
 	}
-	if !isMessageDelivery {
-		return true
-	}
-	if strings.HasPrefix(sender, "SIEVE-DAEMON@") {
-		return true
-	}
-	return false
+	return forward
 }
 
 func (m *Monitor) scanDirs() {

@@ -1,0 +1,14 @@
+Sieve trace log for message delivery:
+
+  Username: mkrueger
+  Session ID: cP4pErgcP2hwVQEA8o/S4w
+  Sender: <email_feedback_handler@bbcsreturn.convio.net>
+  Final recipient: <mkrueger>
+  Default mailbox: INBOX
+
+
+      ## Started executing script 'new-mail'
+   4: include: start script 'ignore-daemons' [inc id: 1, block: 5]
+
+      ## Started executing script 'ignore-daemons'
+   3: header test

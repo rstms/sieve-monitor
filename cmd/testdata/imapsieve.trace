@@ -1,0 +1,23 @@
+ieve trace log for IMAPSIEVE:
+
+  Username: mkrueger
+  Session ID: pzKuZ6Q2MOhMfz+E
+  Source mailbox: INBOX
+  Destination mailbox: INBOX
+  Cause: FLAG
+
+Filtering message:
+
+  UID: 2410619
+  Changed flags: \Seen
+
+      ## Started executing script 'flag-changed'
+   4: include: start script 'ignore-daemons' [inc id: 1, block: 5]
+
+      ## Started executing script 'ignore-daemons'
+   3: header test
+   3:   starting `:matches' match with `i;ascii-casemap' comparator:
+   3:   extracting `X-Filterctl-Request-Id' headers from message
+   3:   finishing match with result: not matched
+   3: jump if result is false
+   3:   jumping to line 8

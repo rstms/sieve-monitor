@@ -1,0 +1,18 @@
+Sieve trace log for message delivery:
+
+  Username: mkrueger
+  Session ID: 0BnLMUyJPmgzqAAA8o/S4w
+  Sender: <SIEVE-DAEMON@rstms.net>
+  Final recipient: <mkrueger>
+  Default mailbox: INBOX
+
+
+      ## Started executing script 'new-mail'
+   4: include: start script 'ignore-filterctl' [inc id: 1, block: 5]
+
+      ## Started executing script 'ignore-filterctl'
+   3: header test
+   3:   starting `:matches' match with `i;ascii-casemap' comparator:
+   3:   extracting `X-Filterctl-Request-Id' headers from message
+   3:   finishing match with result: not matched
+   3: jump if result is false
