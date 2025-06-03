@@ -79,7 +79,7 @@ func (m *Monitor) initUserHomes() {
 		username := strings.TrimSpace(username)
 		if username != "" {
 			home := filepath.Join("/home", username)
-			if IsDir(home) && !m.filterUsername(username) {
+			if IsDir(home) && !m.skipUsername(username) {
 				m.UserHomes[username] = home
 				if m.Verbose {
 					log.Printf("added user from config: %s\n", username)
@@ -93,14 +93,14 @@ func (m *Monitor) initUserHomes() {
 	}
 }
 
-func (m *Monitor) filterUsername(username string) bool {
+func (m *Monitor) skipUsername(username string) bool {
 	if slices.Contains(m.SkipUsers, username) {
-		return false
+		return true
 	}
 	if strings.HasPrefix(username, "_") {
-		return false
+		return true
 	}
-	return true
+	return false
 }
 
 func (m *Monitor) initUserHomesFromPasswd() {
@@ -120,7 +120,7 @@ func (m *Monitor) initUserHomesFromPasswd() {
 				log.Fatalf("failed uid int conversion: %v", err)
 			}
 			home := fields[5]
-			if uid >= m.MinUID && IsDir(home) && !m.filterUsername(username) {
+			if uid >= m.MinUID && IsDir(home) && !m.skipUsername(username) {
 				m.UserHomes[username] = home
 				if m.Verbose {
 					log.Printf("added user from /etc/passwd: %s\n", username)
