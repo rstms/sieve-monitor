@@ -20,6 +20,7 @@ const DEFAULT_STABILIZE_SECONDS = 1
 const DEFAULT_STABILIZE_COUNT = 5
 
 var SENDER_PATTERN = regexp.MustCompile(`^\s*Sender: <([^>]*)>`)
+var MESSAGE_DELIVERY_PATTERN = regexp.MustCompile(`^Sieve trace log for message delivery:.*$`)
 
 type TraceFile struct {
 	Username string
@@ -201,8 +202,12 @@ func (m *Monitor) skipSender(filename string) bool {
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	var sender string
+	var isMessageDelivery bool
 	for scanner.Scan() {
 		line := scanner.Text()
+		if MESSAGE_DELIVERY_PATTERN.MatchString(line) {
+			isMessageDelivery = true
+		}
 		match := SENDER_PATTERN.FindStringSubmatch(line)
 		log.Printf("match: %d %v\n", len(match), match)
 		if len(match) > 1 {
@@ -214,6 +219,9 @@ func (m *Monitor) skipSender(filename string) bool {
 	err = scanner.Err()
 	if err != nil {
 		log.Fatal(err)
+	}
+	if !isMessageDelivery {
+		return true
 	}
 	if strings.HasPrefix(sender, "SIEVE-DAEMON@") {
 		return true
