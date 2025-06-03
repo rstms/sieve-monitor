@@ -41,7 +41,7 @@ import (
 var cfgFile string
 
 var rootCmd = &cobra.Command{
-	Version: "0.1.0",
+	Version: "0.1.1",
 	Use:     "sieve-monitor",
 	Short:   "Sieve trace file processor",
 	Long: `
