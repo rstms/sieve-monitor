@@ -228,11 +228,11 @@ func (t *TraceFile) shouldForward(m *Monitor) bool {
 			break
 		}
 	}
-		action := "Forwarding"
-		if !forward {
-			action = "Skipping"
-		}
-		log.Printf("%s %s: %s\n", action, reason, t.Filename)
+	action := "Forwarding"
+	if !forward {
+		action = "Skipping"
+	}
+	log.Printf("%s %s: %s\n", action, reason, t.Filename)
 	return forward
 }
 
