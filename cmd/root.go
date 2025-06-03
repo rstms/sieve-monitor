@@ -77,7 +77,7 @@ func init() {
 	OptionSwitch("debug", "", "produce debug output")
 	OptionSwitch("verbose", "v", "increase verbosity")
 	OptionSwitch("foreground", "", "do not daemonize")
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", os.Getenv("SIEVE-MONITOR_CONFIG_FILE"), "config file (default is $HOME/.sieve-monitor.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "/etc/sieve-monitor/config.yaml", "config file (default is /etc/sieve-monitor/config.yaml)")
 }
 func initConfig() {
 	if cfgFile != "" {
