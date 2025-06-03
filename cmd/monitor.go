@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -17,6 +18,8 @@ const DEFAULT_MIN_UID = 1000
 const DEFAULT_SCAN_SECONDS = 5
 const DEFAULT_STABILIZE_SECONDS = 1
 const DEFAULT_STABILIZE_COUNT = 5
+
+var SENDER_PATTERN = regexp.MustCompile(`^\s*Sender: <([^>]*)>`)
 
 type TraceFile struct {
 	Username string
@@ -172,9 +175,11 @@ func (f *TraceFile) scan(m *Monitor) bool {
 		if m.Verbose {
 			log.Printf("stabilized: %+v\n", *f)
 		}
-		err := SendFile(f.Username, m.Domain, f.Filename)
-		if err != nil {
-			log.Fatal(err)
+		if !m.skipSender(f.Filename) {
+			err := SendFile(f.Username, m.Domain, f.Filename)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		if m.Verbose {
 			log.Printf("removing: %s\n", f.Filename)
@@ -183,6 +188,34 @@ func (f *TraceFile) scan(m *Monitor) bool {
 		if err != nil {
 			log.Fatal(err)
 		}
+		return true
+	}
+	return false
+}
+
+func (m *Monitor) skipSender(filename string) bool {
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	var sender string
+	for scanner.Scan() {
+		line := scanner.Text()
+		match := SENDER_PATTERN.FindStringSubmatch(line)
+		log.Printf("match: %d %v\n", len(match), match)
+		if len(match) > 1 {
+			sender = match[1]
+			break
+		}
+	}
+	log.Printf("sender=%s\n", sender)
+	err = scanner.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if strings.HasPrefix(sender, "SIEVE-DAEMON@") {
 		return true
 	}
 	return false
