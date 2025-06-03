@@ -56,9 +56,6 @@ After sending, deletes the trace file.
 		DaemonizeDisabled = viper.GetBool("foreground")
 		monitor := NewMonitor()
 		Daemonize(func() {
-			if viper.GetBool("verbose") {
-				fmt.Println(FormatJSON(&monitor))
-			}
 			err := monitor.Run()
 			cobra.CheckErr(err)
 		}, "/var/log/sieve-monitor", &monitor.stop)

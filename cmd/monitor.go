@@ -68,7 +68,7 @@ func NewMonitor() *Monitor {
 	}
 	monitor.initUserHomes()
 	if monitor.Verbose {
-		log.Printf("Monitor:\n%+v\n", monitor)
+		log.Printf("Monitor: %s\n", FormatJSON(&monitor))
 	}
 	return &monitor
 }
