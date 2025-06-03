@@ -40,7 +40,7 @@ import (
 
 var cfgFile string
 
-const Version = "0.1.4"
+const Version = "0.1.5"
 
 var rootCmd = &cobra.Command{
 	Version: Version,
