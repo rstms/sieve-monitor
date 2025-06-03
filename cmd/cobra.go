@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -53,12 +54,18 @@ func OpenLog() {
 		}
 		LogFile = fp
 		log.SetOutput(LogFile)
-		log.SetPrefix(fmt.Sprintf("[%d] ", os.Getpid()))
-		log.SetFlags(log.Ldate | log.Ltime | log.Lmsgprefix)
 	}
+
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmsgprefix)
 	if viper.GetBool("debug") {
 		log.SetFlags(log.Flags() | log.Lshortfile)
 	}
+
+	_, name := filepath.Split(os.Args[0])
+	prefix := fmt.Sprintf("%s[%d] ", name, os.Getpid())
+	log.Printf("prefix='%s'\n", prefix)
+	log.SetPrefix(prefix)
+
 }
 
 func CloseLog() {

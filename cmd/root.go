@@ -40,67 +40,54 @@ import (
 
 var cfgFile string
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Version: "0.0.1",
 	Use:     "sieve-monitor",
-	Short:   "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Short:   "Sieve trace file processor",
+	Long: `
+Scans for a directory named 'sieve_trace' in each user's home directory.
+For each file found matching the pattern '~/sieve_trace/*.trace', the 
+contents are sent to the user as a message from "SIEVE_DAEMON".
+After sending, deletes the trace file.
+`,
+	Run: func(cmd *cobra.Command, args []string) {
+		DaemonizeDisabled = viper.GetBool("foreground")
+		monitor := NewMonitor()
+		Daemonize(func() {
+			if viper.GetBool("verbose") {
+				fmt.Println(FormatJSON(&monitor))
+			}
+			err := monitor.Run()
+			cobra.CheckErr(err)
+		}, "/var/log/sieve-monitor", &monitor.stop)
+	},
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
 }
-
 func init() {
 	cobra.OnInitialize(initConfig)
 	OptionString("logfile", "l", "stderr", "log filename")
 	OptionSwitch("debug", "", "produce debug output")
 	OptionSwitch("verbose", "v", "increase verbosity")
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
+	OptionSwitch("foreground", "", "do not daemonize")
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", os.Getenv("SIEVE-MONITOR_CONFIG_FILE"), "config file (default is $HOME/.sieve-monitor.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
 }
-
-// initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	if cfgFile != "" {
-		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".sieve-monitor" (without extension).
 		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
 		viper.SetConfigName(".sieve-monitor")
 	}
-
 	viper.SetEnvPrefix(rootCmd.Name())
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		if viper.GetBool("verbose") {
 			fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
