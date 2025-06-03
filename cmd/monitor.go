@@ -39,6 +39,7 @@ type Monitor struct {
 }
 
 func NewMonitor() *Monitor {
+	log.Printf("version %s startup\n", Version)
 	viper.SetDefault("scan_interval_seconds", DEFAULT_SCAN_SECONDS)
 	viper.SetDefault("stabilize_interval_seconds", DEFAULT_STABILIZE_SECONDS)
 	viper.SetDefault("stabilize_count", DEFAULT_STABILIZE_COUNT)

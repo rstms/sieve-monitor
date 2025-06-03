@@ -40,8 +40,10 @@ import (
 
 var cfgFile string
 
+const Version = "0.1.2"
+
 var rootCmd = &cobra.Command{
-	Version: "0.1.2",
+	Version: Version,
 	Use:     "sieve-monitor",
 	Short:   "Sieve trace file processor",
 	Long: `
