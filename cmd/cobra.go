@@ -63,7 +63,6 @@ func OpenLog() {
 
 	_, name := filepath.Split(os.Args[0])
 	prefix := fmt.Sprintf("%s[%d] ", name, os.Getpid())
-	log.Printf("prefix='%s'\n", prefix)
 	log.SetPrefix(prefix)
 
 }
